@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Web;
 using System.Web.Http;
 
@@ -24,9 +26,20 @@ namespace Lansky.BrontoCal.Controllers
 		}
 
 		[Route("Calendar")]
-		public IEnumerable<HtmlParser.BrontoEvent> Get()
+		public HttpResponseMessage Get()
 		{
-			return this._parser.GetEvents();
+			var events = this._parser.GetEvents();
+
+			var icalString = this._formatter.GetICal(
+				events.Select(e => new ICalFormatter.VEvent {
+					Summary = e.Name,
+					Description = e.Description,
+					Start = e.From,
+					End = e.To }));
+
+			var stringContent = new StringContent(icalString);
+			stringContent.Headers.ContentType.MediaType = "text/plain";
+			return new HttpResponseMessage(HttpStatusCode.OK) { Content = stringContent };
 		}
 	}
 }

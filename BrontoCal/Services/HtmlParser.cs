@@ -64,11 +64,48 @@ namespace Lansky.BrontoCal.Services
 
 				if (dateInterval.IndexOf('-') == -1) continue;
 
-				var from = dateInterval.Split('-')[0].Trim();
-				var to = dateInterval.Split('-')[1].Trim();
+				var to = dateInterval
+					.Split('-')[1]
+					.Trim()
+					.Split('.')
+					.Select(p => p.Trim())
+					.Where(p => p != "")
+					.ToArray();
+
+				if (to.Length != 3) continue;
+
+				var toDT = new DateTime(
+					Convert.ToInt32(to[2]),
+					Convert.ToInt32(to[1]),
+					Convert.ToInt32(to[0]));
+
+				var from = dateInterval
+					.Split('-')[0]
+					.Trim()
+					.Split('.')
+					.Select(p => p.Trim())
+					.Where(p => p != "")
+					.ToArray();
+
+				if (from.Length == 0) continue;
+
+				var fromDT = new DateTime(
+					from.Length > 2 ? Convert.ToInt32(from[2]) : toDT.Year,
+					from.Length > 1 ? Convert.ToInt32(from[1]) : toDT.Month,
+					Convert.ToInt32(from[0]));
+
+				var desc = "";
+				var descP = node.SelectSingleNode("div/p[not(@class)]");
+				if (descP != null)
+				{
+					desc = descP.InnerText;
+				}
 
 				yield return new BrontoEvent {
-					Name = node.SelectSingleNode("h3/a").InnerText
+					From = fromDT,
+					To = toDT,
+					Name = node.SelectSingleNode("h3/a").InnerText.Trim(),
+					Description = desc
 				};
 			}
 		}
